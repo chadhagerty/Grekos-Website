@@ -31,6 +31,7 @@ type SauceDipAdminRow = {
   id: number;
   sort_order: number;
   name: string;
+  price: string;
   is_active: boolean;
 };
 
@@ -287,7 +288,7 @@ export default function AdminMenuPage() {
                         type="text"
                         value={row.large}
                         onChange={(e) => updatePizzaRow(row.id, { large: e.target.value })}
-                        className="w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white outline-none"
+                        className="w-full rounded-2xl border borderwhite/15 bg-black/30 px-4 py-3 text-white outline-none"
                       />
                     </div>
 
@@ -453,13 +454,23 @@ export default function AdminMenuPage() {
                   key={dip.id}
                   className="rounded-2xl border border-white/15 bg-black/30 p-4"
                 >
-                  <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                  <div className="grid gap-4 lg:grid-cols-[1fr_160px_auto] lg:items-center">
                     <div>
                       <label className="mb-2 block text-sm font-bold text-zinc-200">Name</label>
                       <input
                         type="text"
                         value={dip.name}
                         onChange={(e) => updateSauceDip(dip.id, { name: e.target.value })}
+                        className="w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-bold text-zinc-200">Price</label>
+                      <input
+                        type="text"
+                        value={dip.price}
+                        onChange={(e) => updateSauceDip(dip.id, { price: e.target.value })}
                         className="w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white outline-none"
                       />
                     </div>

@@ -48,6 +48,7 @@ type SauceDipDbRow = {
   id: number;
   sort_order: number;
   name: string;
+  price: string;
   is_active: boolean;
 };
 
@@ -117,7 +118,11 @@ export default async function MenuPage() {
 
   let liveMenuCategories = MENU_CATEGORIES;
   let livePizzaRows = PIZZA_PRICE_ROWS;
-  let liveSauceDips = SAUCE_DIPS;
+  let liveSauceDips: { name: string; price?: string }[] = SAUCE_DIPS.map((name) => ({
+  name,
+  price: "$1.50",
+}));
+
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -154,7 +159,7 @@ export default async function MenuPage() {
       liveSauceDips = (dipsRes.data as SauceDipDbRow[])
         .filter((dip) => dip.is_active)
         .sort((a, b) => a.sort_order - b.sort_order)
-        .map((dip) => dip.name);
+  
     }
   } catch (error) {
     console.error("Could not load menu/specials content:", error);
@@ -345,24 +350,26 @@ export default async function MenuPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-14">
-        <div className="rounded-3xl border border-white/15 bg-white/10 p-6 shadow-lg shadow-black/20">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">
-            Sauces & Dips
-          </p>
-          <h2 className="mt-2 text-2xl font-black">Available Extras</h2>
-          <div className="mt-5 flex flex-wrap gap-3">
-            {liveSauceDips.map((dip) => (
-              <span
-                key={dip}
-                className="rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm text-zinc-100"
-              >
-                {dip}
-              </span>
-            ))}
-          </div>
+     <section className="mx-auto max-w-6xl px-4 pb-14">
+  <div className="rounded-3xl border border-white/15 bg-white/10 p-6 shadow-lg shadow-black/20">
+    <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">
+      Sauces & Dips
+    </p>
+    <h2 className="mt-2 text-2xl font-black">Available Extras</h2>
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+      {liveSauceDips.map((dip) => (
+        <div
+          key={dip.name}
+          className="rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-sm text-zinc-100"
+        >
+          <div className="font-bold text-white">{dip.name}</div>
+          {dip.price ? <div className="mt-1 text-zinc-300">{dip.price}</div> : null}
         </div>
-      </section>
+      ))}
+    </div>
+  </div>
+</section>
+
 
       <GrekosFooter />
     </main>

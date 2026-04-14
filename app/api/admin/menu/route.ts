@@ -30,6 +30,7 @@ type SauceDipPayload = {
   id: number;
   sort_order: number;
   name: string;
+  price: string;
   is_active: boolean;
 };
 
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
     id: Number(dip.id),
     sort_order: Number(dip.sort_order ?? 0),
     name: String(dip.name ?? "").trim(),
+    price: String(dip.price ?? "").trim(),
     is_active: Boolean(dip.is_active),
   }));
 
