@@ -21,6 +21,11 @@ const ADMIN_SECTIONS = [
     title: "Contact",
     text: "Update phone number, address, hours, and holiday note.",
   },
+  {
+    href: "/admin/menu",
+    title: "Menu",
+    text: "Edit existing menu item names, prices, descriptions, and visibility.",
+  },
 ];
 
 export default function AdminDashboardPage() {
@@ -47,7 +52,7 @@ export default function AdminDashboardPage() {
         </Link>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {ADMIN_SECTIONS.map((section) => (
           <Link
             key={section.href}

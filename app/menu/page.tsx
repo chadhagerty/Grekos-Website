@@ -6,6 +6,8 @@ import {
   PIZZA_NOTES,
   PIZZA_PRICE_ROWS,
   SAUCE_DIPS,
+  type MenuCategory,
+  type PizzaPriceRow,
 } from "../../lib/grekos-menu-data";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 
@@ -18,6 +20,93 @@ export const metadata: Metadata = {
   },
 };
 
+type MenuDbItem = {
+  id: number;
+  category_key: string;
+  sort_order: number;
+  name: string;
+  price: string;
+  description: string;
+  popular: boolean;
+  is_active: boolean;
+};
+
+type PizzaDbRow = {
+  id: number;
+  sort_order: number;
+  name: string;
+  description: string;
+  small: string;
+  medium: string;
+  large: string;
+  x_large: string;
+  popular: boolean;
+  is_active: boolean;
+};
+
+type SauceDipDbRow = {
+  id: number;
+  sort_order: number;
+  name: string;
+  is_active: boolean;
+};
+
+const CATEGORY_ORDER: { key: string; title: string }[] = [
+  { key: "grekos-burgers", title: "Grekos Burgers" },
+  { key: "the-roadhouse-burgers", title: "The Roadhouse Burgers" },
+  { key: "deep-fried", title: "Deep Fried" },
+  { key: "baked-dishes", title: "Baked Dishes" },
+  { key: "grekos-wraps", title: "Grekos Wraps" },
+  { key: "grekos-pitas", title: "Grekos Pitas" },
+  { key: "submarine-sandwiches", title: "Submarine Sandwiches" },
+  { key: "salads", title: "Salads" },
+  { key: "chicken-wings", title: "Chicken Wings" },
+  { key: "beverages", title: "Beverages" },
+];
+
+function buildMenuFromDb(items: MenuDbItem[]): MenuCategory[] {
+  const grouped = new Map<string, MenuDbItem[]>();
+
+  for (const item of items) {
+    if (!item.is_active) continue;
+    if (!grouped.has(item.category_key)) {
+      grouped.set(item.category_key, []);
+    }
+    grouped.get(item.category_key)!.push(item);
+  }
+
+  return CATEGORY_ORDER.map((category) => {
+    const rows = grouped.get(category.key) ?? [];
+
+    return {
+      title: category.title,
+      items: rows
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((item) => ({
+          name: item.name,
+          price: item.price,
+          description: item.description || undefined,
+          popular: item.popular,
+        })),
+    };
+  }).filter((category) => category.items.length > 0);
+}
+
+function buildPizzaRowsFromDb(rows: PizzaDbRow[]): PizzaPriceRow[] {
+  return rows
+    .filter((row) => row.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((row) => ({
+      name: row.name,
+      description: row.description || undefined,
+      small: row.small,
+      medium: row.medium,
+      large: row.large,
+      xLarge: row.x_large,
+      popular: row.popular,
+    }));
+}
+
 export default async function MenuPage() {
   let activeSpecial: {
     title: string;
@@ -26,25 +115,49 @@ export default async function MenuPage() {
     image_url: string;
   } | null = null;
 
+  let liveMenuCategories = MENU_CATEGORIES;
+  let livePizzaRows = PIZZA_PRICE_ROWS;
+  let liveSauceDips = SAUCE_DIPS;
+
   try {
     const supabase = await createSupabaseServerClient();
 
-    const { data } = await supabase
-      .from("specials_content")
-      .select("*")
-      .eq("id", 1)
-      .single();
+    const [specialRes, menuRes, pizzaRes, dipsRes] = await Promise.all([
+      supabase.from("specials_content").select("*").eq("id", 1).single(),
+      supabase
+        .from("menu_items")
+        .select("*")
+        .order("category_key", { ascending: true })
+        .order("sort_order", { ascending: true }),
+      supabase.from("pizza_price_rows").select("*").order("sort_order", { ascending: true }),
+      supabase.from("sauce_dips").select("*").order("sort_order", { ascending: true }),
+    ]);
 
-    if (data?.enabled) {
+    if (specialRes.data?.enabled) {
       activeSpecial = {
-        title: data.title || "Sunday Special",
-        body: data.body || "",
-        price_text: data.price_text || "",
-        image_url: data.image_url || "",
+        title: specialRes.data.title || "Sunday Special",
+        body: specialRes.data.body || "",
+        price_text: specialRes.data.price_text || "",
+        image_url: specialRes.data.image_url || "",
       };
     }
+
+    if (!menuRes.error && menuRes.data && menuRes.data.length > 0) {
+      liveMenuCategories = buildMenuFromDb(menuRes.data as MenuDbItem[]);
+    }
+
+    if (!pizzaRes.error && pizzaRes.data && pizzaRes.data.length > 0) {
+      livePizzaRows = buildPizzaRowsFromDb(pizzaRes.data as PizzaDbRow[]);
+    }
+
+    if (!dipsRes.error && dipsRes.data && dipsRes.data.length > 0) {
+      liveSauceDips = (dipsRes.data as SauceDipDbRow[])
+        .filter((dip) => dip.is_active)
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((dip) => dip.name);
+    }
   } catch (error) {
-    console.error("Could not load special for menu page:", error);
+    console.error("Could not load menu/specials content:", error);
   }
 
   return (
@@ -53,14 +166,12 @@ export default async function MenuPage() {
 
       <section className="border-b border-white/10 bg-black/40">
         <div className="mx-auto max-w-6xl px-4 py-16">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">
-            Menu
-          </p>
-          <h1 className="mt-3 text-4xl font-black uppercase md:text-5xl">
-            Our Menu
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">MENU</p>
+          <h1 className="mt-3 text-4xl font-black uppercase leading-tight md:text-6xl">
+            OUR MENU
           </h1>
-          <p className="mt-5 max-w-3xl text-lg text-zinc-200">
-            Original recipes and customer favorites
+          <p className="mt-5 max-w-xl text-lg text-zinc-200">
+            Original recipes and customer favourites.
           </p>
         </div>
       </section>
@@ -84,7 +195,7 @@ export default async function MenuPage() {
                 <img
                   src={activeSpecial.image_url}
                   alt={activeSpecial.title}
-                  className="max-h-[280px] w-full object-cover"
+                  className="h-[140px] w-full object-cover"
                 />
               </div>
             ) : null}
@@ -101,14 +212,11 @@ export default async function MenuPage() {
               </p>
               <h2 className="mt-2 text-3xl font-black">Pizza Pricing</h2>
             </div>
-            <div className="text-sm text-zinc-300">
-              Small • Medium • Large • X-Large
-            </div>
+            <div className="text-sm text-zinc-300">Small • Medium • Large • X-Large</div>
           </div>
 
-          {/* MOBILE PIZZA CARDS */}
           <div className="space-y-4 md:hidden">
-            {PIZZA_PRICE_ROWS.map((row) => (
+            {livePizzaRows.map((row) => (
               <div
                 key={row.name}
                 className="rounded-2xl border border-white/15 bg-black/30 p-4"
@@ -148,7 +256,6 @@ export default async function MenuPage() {
             ))}
           </div>
 
-          {/* DESKTOP TABLE */}
           <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full border-separate border-spacing-y-3">
               <thead>
@@ -161,7 +268,7 @@ export default async function MenuPage() {
                 </tr>
               </thead>
               <tbody>
-                {PIZZA_PRICE_ROWS.map((row) => (
+                {livePizzaRows.map((row) => (
                   <tr key={row.name} className="rounded-2xl bg-black/30">
                     <td className="rounded-l-2xl px-4 py-4 align-top">
                       <div className="flex flex-wrap items-center gap-2">
@@ -200,7 +307,7 @@ export default async function MenuPage() {
 
       <section className="mx-auto max-w-6xl px-4 pb-14">
         <div className="space-y-6">
-          {MENU_CATEGORIES.map((category) => (
+          {liveMenuCategories.map((category) => (
             <div
               key={category.title}
               className="rounded-3xl border border-white/15 bg-white/10 p-6 shadow-lg shadow-black/20"
@@ -245,7 +352,7 @@ export default async function MenuPage() {
           </p>
           <h2 className="mt-2 text-2xl font-black">Available Extras</h2>
           <div className="mt-5 flex flex-wrap gap-3">
-            {SAUCE_DIPS.map((dip) => (
+            {liveSauceDips.map((dip) => (
               <span
                 key={dip}
                 className="rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm text-zinc-100"
