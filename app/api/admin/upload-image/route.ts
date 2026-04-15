@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 import { requireAdminUser } from "../../../../lib/admin-auth";
 
+const BUCKET_NAME = "site-images";
+
 function sanitizeFileName(name: string) {
   const lastDot = name.lastIndexOf(".");
   const base = lastDot >= 0 ? name.slice(0, lastDot) : name;
@@ -36,31 +38,52 @@ export async function POST(request: Request) {
 
     const supabase = await createSupabaseServerClient();
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
-
-    const safeFolder = folder
-      .toLowerCase()
-      .replace(/[^a-z0-9/-]/g, "")
-      .replace(/\/+/g, "/")
-      .replace(/^\/|\/$/g, "") || "uploads";
+    const safeFolder =
+      folder
+        .toLowerCase()
+        .replace(/[^a-z0-9/-]/g, "")
+        .replace(/\/+/g, "/")
+        .replace(/^\/|\/$/g, "") || "uploads";
 
     const fileName = sanitizeFileName(file.name);
     const filePath = `${safeFolder}/${fileName}`;
 
+    const { data: bucketList, error: bucketError } = await supabase.storage.listBuckets();
+
+    if (bucketError) {
+      return NextResponse.json(
+        { error: `Could not read storage buckets: ${bucketError.message}` },
+        { status: 500 }
+      );
+    }
+
+    const bucketExists = (bucketList ?? []).some((bucket) => bucket.name === BUCKET_NAME);
+
+    if (!bucketExists) {
+      return NextResponse.json(
+        {
+          error: `Storage bucket "${BUCKET_NAME}" was not found. Check the exact bucket name in Supabase Storage.`,
+        },
+        { status: 500 }
+      );
+    }
+
     const { error: uploadError } = await supabase.storage
-      .from("site-images")
-      .upload(filePath, buffer, {
+      .from(BUCKET_NAME)
+      .upload(filePath, file, {
         contentType: file.type || "image/jpeg",
         upsert: true,
       });
 
     if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: `Upload failed: ${uploadError.message}` },
+        { status: 500 }
+      );
     }
 
     const { data: publicUrlData } = supabase.storage
-      .from("site-images")
+      .from(BUCKET_NAME)
       .getPublicUrl(filePath);
 
     return NextResponse.json({
