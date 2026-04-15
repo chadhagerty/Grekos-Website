@@ -48,26 +48,6 @@ export async function POST(request: Request) {
     const fileName = sanitizeFileName(file.name);
     const filePath = `${safeFolder}/${fileName}`;
 
-    const { data: bucketList, error: bucketError } = await supabase.storage.listBuckets();
-
-    if (bucketError) {
-      return NextResponse.json(
-        { error: `Could not read storage buckets: ${bucketError.message}` },
-        { status: 500 }
-      );
-    }
-
-    const bucketExists = (bucketList ?? []).some((bucket) => bucket.name === BUCKET_NAME);
-
-    if (!bucketExists) {
-      return NextResponse.json(
-        {
-          error: `Storage bucket "${BUCKET_NAME}" was not found. Check the exact bucket name in Supabase Storage.`,
-        },
-        { status: 500 }
-      );
-    }
-
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(filePath, file, {
@@ -92,7 +72,8 @@ export async function POST(request: Request) {
       path: filePath,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Upload route error:", error);
+
     return NextResponse.json(
       {
         error:
