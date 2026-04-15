@@ -3,7 +3,19 @@ import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 import { requireAdminUser } from "../../../../lib/admin-auth";
 
 function sanitizeFileName(name: string) {
-  return name.replace(/[^a-zA-Z0-9.\-_]/g, "-").toLowerCase();
+  const lastDot = name.lastIndexOf(".");
+  const base = lastDot >= 0 ? name.slice(0, lastDot) : name;
+  const ext = lastDot >= 0 ? name.slice(lastDot + 1).toLowerCase() : "jpg";
+
+  const safeBase = base
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+
+  const safeExt = ext.replace(/[^a-z0-9]/g, "") || "jpg";
+
+  return `${safeBase || "image"}-${Date.now()}.${safeExt}`;
 }
 
 export async function POST(request: Request) {
@@ -13,40 +25,57 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = await createSupabaseServerClient();
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file");
+    const folder = String(formData.get("folder") ?? "uploads").trim();
 
-  const formData = await request.formData();
-  const file = formData.get("file");
-  const folder = String(formData.get("folder") ?? "misc").trim() || "misc";
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
+    }
 
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
-  }
+    const supabase = await createSupabaseServerClient();
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
 
-  const safeName = sanitizeFileName(file.name);
-  const filePath = `${folder}/${Date.now()}-${safeName}`;
+    const safeFolder = folder
+      .toLowerCase()
+      .replace(/[^a-z0-9/-]/g, "")
+      .replace(/\/+/g, "/")
+      .replace(/^\/|\/$/g, "") || "uploads";
 
-  const { error: uploadError } = await supabase.storage
-    .from("site-images")
-    .upload(filePath, buffer, {
-      contentType: file.type || "image/png",
-      upsert: false,
+    const fileName = sanitizeFileName(file.name);
+    const filePath = `${safeFolder}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("site-images")
+      .upload(filePath, buffer, {
+        contentType: file.type || "image/jpeg",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("site-images")
+      .getPublicUrl(filePath);
+
+    return NextResponse.json({
+      success: true,
+      publicUrl: publicUrlData.publicUrl,
+      path: filePath,
     });
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Could not upload image.",
+      },
+      { status: 500 }
+    );
   }
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("site-images").getPublicUrl(filePath);
-
-  return NextResponse.json({
-    success: true,
-    path: filePath,
-    publicUrl,
-  });
 }
