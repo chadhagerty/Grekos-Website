@@ -68,6 +68,8 @@ export default function AdminGalleryPage() {
       }
 
       setImageUrl(payload.publicUrl);
+      console.log("Uploaded image URL:", payload.publicUrl);
+
       setStatusText("Image uploaded. Click Add Image to publish it.");
     } catch (error) {
       console.error(error);
@@ -134,8 +136,12 @@ export default function AdminGalleryPage() {
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload?.error || "Could not delete image.");
-      }
+  console.error("Upload route payload:", payload);
+  throw new Error(
+    payload?.error || payload?.message || JSON.stringify(payload) || "Could not upload gallery image."
+  );
+}
+
 
       setStatusText("Gallery image deleted.");
       await loadImages();
@@ -183,7 +189,7 @@ export default function AdminGalleryPage() {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  handleUpload(file);
+                  void handleUpload(file);
                 }
               }}
               className="block w-full text-sm text-zinc-200"
