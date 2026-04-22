@@ -4,6 +4,7 @@ import GrekosHeader from "./components/GrekosHeader";
 import GrekosFooter from "./components/GrekosFooter";
 import { createSupabaseServerClient } from "../lib/supabase-server";
 import { CONTACT_DEFAULTS, HOMEPAGE_DEFAULTS } from "../lib/grekos-defaults";
+import { cinzel } from "./layout";
 
 export const metadata: Metadata = {
   title: "Gananoque Pizza, Takeout & Delivery",
@@ -116,7 +117,9 @@ export default async function HomePage() {
             <p className="mb-3 text-sm font-bold uppercase tracking-[0.25em] text-blue-400">
               Gananoque • Ontario
             </p>
-            <h1 className="text-4xl font-black uppercase leading-tight md:text-6xl">
+            <h1
+              className={`${cinzel.className} text-4xl font-black uppercase leading-tight md:text-6xl`}
+            >
               {homepage.hero_headline}
             </h1>
             <p className="mt-5 max-w-xl text-lg text-zinc-200">
@@ -167,7 +170,9 @@ export default async function HomePage() {
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">
               Customer Favourites
             </p>
-            <h2 className="text-3xl font-black">What people come back for</h2>
+            <h2 className={`${cinzel.className} text-3xl font-black`}>
+              What people come back for
+            </h2>
           </div>
           <Link href="/menu" className="text-sm font-bold text-blue-400 hover:text-blue-300">
             Full Menu →
@@ -180,7 +185,9 @@ export default async function HomePage() {
               key={item.title}
               className="rounded-2xl border border-white/15 bg-white/10 p-5 shadow-lg shadow-black/20"
             >
-              <h3 className="text-xl font-bold text-white">{item.title}</h3>
+              <h3 className={`${cinzel.className} text-xl font-bold text-white`}>
+                {item.title}
+              </h3>
               <p className="mt-2 text-sm leading-6 text-zinc-200">{item.text}</p>
             </div>
           ))}
@@ -193,7 +200,9 @@ export default async function HomePage() {
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">
               Our Story
             </p>
-            <h2 className="mt-2 text-3xl font-black">A Gananoque staple since 1991</h2>
+            <h2 className={`${cinzel.className} mt-2 text-3xl font-black`}>
+              A Gananoque staple since 1991
+            </h2>
             <p className="mt-4 max-w-2xl text-zinc-200">
               For over 30 years, Grekos Pizzeria has been serving Gananoque with
               generous portions, dependable takeout and delivery, and the kind of
@@ -212,7 +221,7 @@ export default async function HomePage() {
           </div>
 
           <div className="rounded-2xl border border-white/15 bg-white/10 p-6 shadow-lg shadow-black/20">
-            <h3 className="text-lg font-bold">Hours & Contact</h3>
+            <h3 className={`${cinzel.className} text-lg font-bold`}>Hours & Contact</h3>
             <div className="mt-4 space-y-2 text-sm text-zinc-200">
               <p>{contact.address_line_1}</p>
               <p>{contact.address_line_2}</p>
@@ -248,12 +257,12 @@ export default async function HomePage() {
         <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">
           Sunday Special
         </p>
-        <h2 className="mt-2 text-3xl font-black">
+        <h2 className={`${cinzel.className} mt-2 text-3xl font-black`}>
           {activeSpecial ? "This Week’s Sunday Special" : "Keep checking for the next Sunday special"}
         </h2>
 
         <div className="mt-8 rounded-3xl border border-blue-400/20 bg-blue-500/10 p-6 shadow-lg shadow-black/20">
-          <div className="text-xl font-black text-white">
+          <div className={`${cinzel.className} text-xl font-black text-white`}>
             {activeSpecial ? activeSpecial.title : "No regular meal deals"}
           </div>
 

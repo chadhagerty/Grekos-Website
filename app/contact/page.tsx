@@ -3,6 +3,7 @@ import GrekosFooter from "../components/GrekosFooter";
 import GrekosHeader from "../components/GrekosHeader";
 import { createSupabaseServerClient } from "../../lib/supabase-server";
 import { CONTACT_DEFAULTS } from "../../lib/grekos-defaults";
+import { cinzel } from "../layout";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -54,7 +55,7 @@ export default async function ContactPage() {
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">
             Contact
           </p>
-          <h1 className="mt-3 text-4xl font-black uppercase md:text-5xl">
+          <h1 className={`${cinzel.className} mt-3 text-4xl font-black uppercase md:text-5xl`}>
             Visit or Call Grekos
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-zinc-200">
@@ -64,10 +65,10 @@ export default async function ContactPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl grid gap-8 px-4 py-14 md:grid-cols-2">
+      <section className="mx-auto grid max-w-5xl gap-8 px-4 py-14 md:grid-cols-2">
         <div className="space-y-6">
           <div className="rounded-3xl border border-white/15 bg-white/10 p-6 shadow-lg shadow-black/20">
-            <h2 className="text-xl font-black text-blue-400">Phone</h2>
+            <h2 className={`${cinzel.className} text-xl font-black text-blue-400`}>Phone</h2>
             <a
               href={contact.phone_href}
               className="mt-3 block text-2xl font-bold text-white hover:text-blue-400"
@@ -86,7 +87,7 @@ export default async function ContactPage() {
           </div>
 
           <div className="rounded-3xl border border-white/15 bg-white/10 p-6 shadow-lg shadow-black/20">
-            <h2 className="text-xl font-black text-blue-400">Address</h2>
+            <h2 className={`${cinzel.className} text-xl font-black text-blue-400`}>Address</h2>
             <p className="mt-3 text-zinc-200">
               {contact.address_line_1}
               <br />
@@ -105,7 +106,7 @@ export default async function ContactPage() {
         </div>
 
         <div className="rounded-3xl border border-white/15 bg-white/10 p-6 shadow-lg shadow-black/20">
-          <h2 className="text-xl font-black text-blue-400">Hours</h2>
+          <h2 className={`${cinzel.className} text-xl font-black text-blue-400`}>Hours</h2>
 
           <div className="mt-6 space-y-3 text-zinc-200">
             {hours.map((item) => (

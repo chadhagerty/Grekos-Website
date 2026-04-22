@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -46,14 +47,21 @@ export default function GrekosHeader() {
     <header className="border-b border-white/10 bg-black/90 text-white">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center justify-between gap-4">
-          <div>
-            <Link href="/" className="text-2xl font-black tracking-wide text-blue-500">
-              Grekos Pizzeria
+          <div className="flex flex-col items-start">
+            <Link href="/">
+              <Image
+                src="/logo.png"
+                alt="Grekos Pizzeria"
+                width={220}
+                height={80}
+                className="h-70 w-auto"
+                priority
+              />
             </Link>
-            <div className="text-sm text-zinc-300">Serving Gananoque Since 1991</div>
-          </div>
 
-          <a
+            
+
+            <a
             href={contact.phone_href}
             className="hidden rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-500 sm:inline-block lg:hidden"
           >
@@ -90,6 +98,7 @@ export default function GrekosHeader() {
           </nav>
         </div>
       </div>
+    </div>
     </header>
   );
 }
